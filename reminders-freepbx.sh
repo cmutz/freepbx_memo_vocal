@@ -25,7 +25,7 @@
 
 clear
 
-version=0.001
+version=0.002
 
 echo ".-.                          .-. _ .-.   .-.            .---. .---. .-..-."
 echo ": :                          : ::_;: :   : :  v$version    : .; :: .; :: \`' :"
@@ -35,7 +35,7 @@ echo ": :: ,. :'  ..': ..'' '_.'' .; :: :' .; :: :_ ' '_.'    : :   : .; :.'  \`
 echo ":_;:_;:_;\`.__.':_;  \`.__.'\`.__.':_;\`.__.'\`.__;\`.__.'    :_;   :___.':_;:_;"
 echo "Copyright (c) 2005-2016, Ward Mundy & Associates LLC. All rights reserved."
 echo " "
-echo "THIS SCRIPT INSTALLS TELEPHONE REMINDERS 4.0 ONTO THE XIVO PLATFORM ONLY!"
+echo "THIS SCRIPT INSTALLS TELEPHONE REMINDERS 4.0 ONTO THE FREEPBX PLATFORM ONLY!"
 echo " "
 echo "BY USING INCREDIBLE PBX COMPONENTS, YOU AGREE TO ASSUME ALL RESPONSIBILITY"
 echo "FOR USE OF THE PROGRAMS INCLUDED IN THIS INSTALLATION. NO WARRANTIES"
@@ -86,23 +86,20 @@ chmod g+s outgoing
 cp -pr outgoing reminders
 cp -pr outgoing recurring
 
-chown asterisk:www-data /usr/local/share/asterisk/sounds
+chown asterisk:www-data /var/lib/share/asterisk/sounds
 
 echo "Installing Telephone Reminders voice prompts..."
-cd /usr/share/asterisk/sounds/custom
-tar zxvf /root/reminders-sounds.tar.gz
+cp -pr /root/reminders-sounds/* /var/lib/asterisk/sounds/custom/
 echo " "
 
 echo "Installing Telephone Reminders AGI scripts..."
-cd /var/lib/asterisk/agi-bin
-tar zxvf /root/reminders-agi.tar.gz
+cp -pr /root/reminders-agi/* /var/lib/asterisk/agi-bin/
 echo " "
 
 echo "Installing Telephone Reminders dialplan code..."
-echo "#include extensions_extra.d/*" > /etc/asterisk/extensions_custom.conf
+echo "#include extensions_extra.d/*" >> /etc/asterisk/extensions_custom.conf
 mkdir /etc/asterisk/extensions_extra.d
-cd /etc/asterisk/extensions_extra.d
-tar zxvf /root/reminders-conf.tar.gz
+cp -pr /root/reminders-conf-fpx/* /etc/asterisk/extensions_extra.d/
 echo " "
 
 echo "Installing Telephone Reminders 123 extension..."
@@ -113,35 +110,33 @@ exten => 123,2,Wait(1)
 exten => 123,3,Authenticate($reminderspw)
 exten => 123,4,Goto(reminder,s,1)
 ;# // END Reminders
-" >> /etc/asterisk/extensions_extra.d/xivo-extrafeatures.conf
+" >> /etc/asterisk/extensions_extra.d/extensions_custom.conf
 
 echo "Installing Telephone Web Reminders application..."
-cd /var/www/html
-mkdir reminders
-chown asterisk:www-data reminders
-chmod 775 reminders
-cd reminders
-tar zxvf /root/reminders-web.tar.gz
+mkdir /var/www/html/reminders
+cp -pr /root/reminders-web-fpx/* /var/www/html/reminders/
+chown asterisk:www-data /var/www/html/reminders
+chmod 775 /var/www/html/reminders/
 echo " "
 
-echo "Reconfiguring NGINX to support Incredible PBX web apps..."
-cd /
-tar zxvf /root/reminders-nginx.tar.gz
-/etc/init.d/nginx restart
-echo " "
+#echo "Reconfiguring NGINX to support Incredible PBX web apps..."
+#cd /
+#tar zxvf /root/reminders-nginx.tar.gz
+#/etc/init.d/nginx restart
+#echo " "
 
-echo "Checking for Festival TTS to support Web Reminders..."
-test=`ps aux | grep "festival --server" | head -n -1`
-if [ -z "$test" ]; then
- echo "Installing Festival TTS engine..."
- cd /
- wget http://incrediblepbx.com/festival-xivo.tar.gz
- tar zxvf festival-xivo.tar.gz
- rm -f festival-xivo.tar.gz
- cd /root
- ./festival-xivo.sh
-fi
-echo " "
+#echo "Checking for Festival TTS to support Web Reminders..."
+#test=`ps aux | grep "festival --server" | head -n -1`
+#if [ -z "$test" ]; then
+# echo "Installing Festival TTS engine..."
+# cd /
+# wget http://incrediblepbx.com/festival-xivo.tar.gz
+# tar zxvf festival-xivo.tar.gz
+# rm -f festival-xivo.tar.gz
+# cd /root
+# ./festival-xivo.sh
+#fi
+#echo " "
 
 echo "Setting up cron jobs for recurring reminders..."
 sed -i '/run_recurring/d' /etc/crontab
