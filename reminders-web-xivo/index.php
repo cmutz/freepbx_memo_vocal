@@ -11,11 +11,11 @@
 //-------- DON'T CHANGE ANYTHING ABOVE THIS LINE ----------------
 
  $endofmonthflag=1;
- $extensionmaxdigits=10 ;
+ $extensionmaxdigits=9 ;
  $debug = 1; 
  $newlogeachdebug = 1;
- $emaildebuglog = 0;
- $email = "username@emailhost.xxx" ;
+ $emaildebuglog = 1;
+ $email = "infrastructure@whoople.fr" ;
  $trunk = "Local" ;
  $callerid = "MEMO" ;
  $numcallattempts=6 ;
@@ -255,9 +255,7 @@ $newgsm   = "/var/lib/asterisk/sounds/custom/" . $APPTTIME . "." . $APPTDT . "."
 $tempgsm   = "/var/lib/asterisk/sounds/custom/" . $APPTTIME . "." . $APPTDT . "." . $APPTPHONE . "temp.wav" ;
 //$retcode3 = system("sox $tmpwave -r 8000 -c 1 $newgsm") ;
 
-//$retcode2 = system ("cat $tmptext | $mytts -F 8000 -o $newgsm");
 system ("cat $tmptext | xargs -0 $mytts -l=fr-FR -w=$tempgsm");
-//shell_exec ("$mytts -l=fr-FR -w=$tempgsm "$(cat $tmptext)"");
 $retcode2 = system ("sox $tempgsm -r 8000 -c 1 $newgsm -q");
 //sox -V 1603.20160822.7110.wav -r 8000 -c 1 file2.wav -q
 //pico2wave -l=fr-FR -w=/tmp/test.wav "$(cat /tmp/test.txt)"
@@ -265,6 +263,7 @@ $retcode2 = system ("sox $tempgsm -r 8000 -c 1 $newgsm -q");
 
 unlink ("$tmptext") ;
 unlink ("$tmpwave") ;
+unlink ("$tempgsm") ;
 
 $fromfile = "/tmp/$token.tmp" ;
 if (date("Ymd") <> $APPTDT) :
@@ -277,13 +276,13 @@ if ($trunk<>"Local") :
  if (strlen($APPTPHONE)<=$extensionmaxdigits) :
   $txt2write = "Channel: " . $trunk . "/" . $APPTPHONE . "@default\n" ;
  else :
-  $txt2write = "Channel: " . $trunk . "/" . $APPTPHONE . "@default\n" ;
+  $txt2write = "Channel: " . $trunk . "/" . $APPTPHONE . "@from-internal\n" ;
  endif;
 else :
  if (strlen($APPTPHONE)<=$extensionmaxdigits) :
   $txt2write = "Channel: " . $trunk . "/" . $APPTPHONE . "@default\n" ;
  else :
-  $txt2write = "Channel: " . $trunk . "/" . $APPTPHONE . "@default\n" ;
+  $txt2write = "Channel: " . $trunk . "/" . $APPTPHONE . "@from-internal\n" ;
  endif ;
 endif;
 fwrite($fptmp,$txt2write) ;
