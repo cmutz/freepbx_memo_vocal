@@ -1,2 +1,6 @@
 # freepbx_memo_vocal
-Memo vocal avec formulaire pour l'IPBX FreePbx
+
+Project reminders for freepbx and xivo
+===================
+
+- Memo vocal avec formulaire pour l'IPBX FreePbx
