@@ -1,0 +1,22 @@
+#!/usr/bin/perl
+
+$PENDING = "/var/spool/asterisk/reminders" ;
+$OUTGOING = "/var/spool/asterisk/outgoing" ;
+$SLEEP = 5 ;
+
+chomp($DATE = `/bin/date +%Y%m%d`);
+
+chdir($PENDING) ;
+
+foreach $file ( <*.$DATE.*.call> )
+{
+        if ( -r $file )
+        {
+                $file =~ m/^(\d\d\d\d)\.(\d\d\d\d\d\d\d\d)\..+\.call$/ ;
+                $timestamp = $2 . $1 ;
+                rename($file, "$OUTGOING/$file") ;
+      		system("touch -t $timestamp $OUTGOING/$file") ;
+                sleep($SLEEP) ;
+        }
+}
+

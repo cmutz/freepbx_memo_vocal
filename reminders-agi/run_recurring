@@ -1,0 +1,178 @@
+#!/usr/bin/php -q
+<?php
+// version 4.0a
+$d='/var/spool/asterisk/recurring/';
+$c='/var/spool/asterisk/reminders/';
+$m='/var/lib/asterisk/sounds/custom/';
+$today=date("Ymd");
+
+$dir = opendir($d); 
+while ($f = readdir($dir)) {
+ if (eregi("\.$today.",$f)){ #if filename matches today's date in the name
+    if (strpos($f,".call")>0) :
+     $l = strrpos($f,".") ;
+     $RECURRING = substr($f,$l+1) ;
+     $callfile = substr($f,0,$l) ;
+     $APPTDT   = substr($f,5,8); 
+     $APPTTIME = substr($f,0,4);
+      $APPTPHONE= substr($f,14);
+      $l1 = strpos($APPTPHONE,".") ;
+     $APPTPHONE= substr($APPTPHONE,0,$l1);
+     $time2call =  mktime (substr($callfile,0,2),substr($callfile,2,2),5,substr($callfile,9,2),substr($callfile,11,2),substr($callfile,5,4)) ;
+
+//     echo $APPTTIME . " - " . $APPTDT . " - " . $APPTPHONE."\n" ;
+
+     if (substr($RECURRING,0,7)=="monthly") :
+      $monthcode = substr($RECURRING,7) ;
+      $RECURRING = "monthly";
+     else :
+      $monthcode="" ;
+     endif ;
+
+//     echo $monthcode."\n" ;
+
+     $tofile = $c.$callfile;
+     $fromfile = $d.$f;
+     copy($fromfile,$tofile);
+     touch($tofile, $time2call);
+     chmod($tofile, 0777);
+     chown($tofile, "asterisk");
+     chgrp($tofile, "asterisk");
+//     echo $callfile."\n" ;
+
+     $f = $APPTTIME . "." . $APPTDT . "." . $APPTPHONE . ".ulaw" ;
+     $frommsg = $d.$f ;
+     $ulaw=true;
+     if (!file_exists($frommsg)) :
+      $f = $APPTTIME . "." . $APPTDT . "." . $APPTPHONE . ".wav" ;
+      $frommsg = $d.$f ;
+      $ulaw=false;
+     endif ;
+     $tomsg   = $m.$f ;
+     $msgfile = $f ;
+     copy($frommsg,$tomsg);
+     chmod($tomsg, 0777);
+     chown($tomsg, "asterisk");
+     chgrp($tomsg, "asterisk");
+//     echo $msgfile . "\n" ;
+
+// code to rename recurring files begins here
+$APPTYR = substr($APPTDT,0,4);
+$APPTMO = substr($APPTDT,4,2);
+$APPTDA = substr($APPTDT,6,2);
+if ($monthcode<>"") :
+ $APPTDA = $monthcode ;
+endif ;
+
+if ($RECURRING=="weekday") :
+ if (date ("D", mktime (0,0,0,$APPTMO,$APPTDA,$APPTYR))=="Fri") :
+  $NEXTDT=date("Ymd", mktime (0,0,0,$APPTMO,$APPTDA+3,$APPTYR));
+ elseif (date ("D", mktime (0,0,0,$APPTMO,$APPTDA,$APPTYR))=="Sat") :
+  $NEXTDT=date("Ymd", mktime (0,0,0,$APPTMO,$APPTDA+2,$APPTYR));
+ else :
+  $NEXTDT=date("Ymd", mktime (0,0,0,$APPTMO,$APPTDA+1,$APPTYR));
+ endif ;
+ $recur_script = "/var/spool/asterisk/recurring/" . $APPTTIME . "." . $NEXTDT . "." . $APPTPHONE . ".call." . $RECURRING ;
+ if (empty($ulaw)) :
+  $recur_msg = "/var/spool/asterisk/recurring/" . $APPTTIME . "." . $NEXTDT . "." . $APPTPHONE . ".wav" ;
+ else :
+  $recur_msg = "/var/spool/asterisk/recurring/" . $APPTTIME . "." . $NEXTDT . "." . $APPTPHONE . ".ulaw" ;
+ endif;
+ $moveok = rename($fromfile,$recur_script) ;
+ $moveok = rename($frommsg,$recur_msg) ;
+ $handle = fopen($recur_script, "r");
+ $all_data = fread($handle, fileSize($recur_script));
+ fclose($handle);
+ $all_data = str_replace($APPTDT, $NEXTDT, $all_data);
+ $handle = fopen($recur_script, "w");
+ fwrite($handle, $all_data);
+ fclose($handle);
+elseif ($RECURRING=="daily") :
+ $NEXTDT=date("Ymd", mktime (0,0,0,$APPTMO,$APPTDA+1,$APPTYR));
+ $recur_script = "/var/spool/asterisk/recurring/" . $APPTTIME . "." . $NEXTDT . "." . $APPTPHONE . ".call." . $RECURRING ;
+ if (empty($ulaw)) :
+  $recur_msg = "/var/spool/asterisk/recurring/" . $APPTTIME . "." . $NEXTDT . "." . $APPTPHONE . ".wav" ;
+ else :
+  $recur_msg = "/var/spool/asterisk/recurring/" . $APPTTIME . "." . $NEXTDT . "." . $APPTPHONE . ".ulaw" ;
+ endif;
+ $moveok = rename($fromfile,$recur_script) ;
+ $moveok = rename($frommsg,$recur_msg) ;
+ $handle = fopen($recur_script, "r");
+ $all_data = fread($handle, fileSize($recur_script));
+ fclose($handle);
+ $all_data = str_replace($APPTDT, $NEXTDT, $all_data);
+ $handle = fopen($recur_script, "w");
+ fwrite($handle, $all_data);
+ fclose($handle);
+elseif ($RECURRING=="weekly") :
+ $NEXTDT=date("Ymd", mktime (0,0,0,$APPTMO,$APPTDA+7,$APPTYR));
+ $recur_script = "/var/spool/asterisk/recurring/" . $APPTTIME . "." . $NEXTDT . "." . $APPTPHONE . ".call." . $RECURRING ;
+ if (empty($ulaw)) :
+  $recur_msg = "/var/spool/asterisk/recurring/" . $APPTTIME . "." . $NEXTDT . "." . $APPTPHONE . ".wav" ;
+ else :
+  $recur_msg = "/var/spool/asterisk/recurring/" . $APPTTIME . "." . $NEXTDT . "." . $APPTPHONE . ".ulaw" ;
+ endif;
+ $moveok = rename($fromfile,$recur_script) ;
+ $moveok = rename($frommsg,$recur_msg) ;
+ $handle = fopen($recur_script, "r");
+ $all_data = fread($handle, fileSize($recur_script));
+ fclose($handle);
+ $all_data = str_replace($APPTDT, $NEXTDT, $all_data);
+ $handle = fopen($recur_script, "w");
+ fwrite($handle, $all_data);
+ fclose($handle);
+elseif ($RECURRING=="monthly") :
+ $NEXTDT=date("Ymd", mktime (0,0,0,$APPTMO+1,$APPTDA,$APPTYR));
+ $NEXTYR = substr($NEXTDT,0,4);
+ $NEXTMO = substr($NEXTDT,4,2);
+ $NEXTDA = substr($NEXTDT,6,2);
+ while (date ("m", mktime (0,0,0,$NEXTMO,$NEXTDA,$NEXTYR))<>date ("m", mktime (0,0,0,$APPTMO+1,1,$APPTYR))) :
+  $NEXTDT=date("Ymd", mktime (0,0,0,$NEXTMO,$NEXTDA-1,$NEXTYR));
+  $NEXTYR = substr($NEXTDT,0,4);
+  $NEXTMO = substr($NEXTDT,4,2);
+  $NEXTDA = substr($NEXTDT,6,2);
+ endwhile ;
+ $recur_script = "/var/spool/asterisk/recurring/" . $APPTTIME . "." . $NEXTDT . "." . $APPTPHONE . ".call." . $RECURRING . $APPTDA ;
+ if (empty($ulaw)) :
+  $recur_msg = "/var/spool/asterisk/recurring/" . $APPTTIME . "." . $NEXTDT . "." . $APPTPHONE . ".wav" ;
+ else :
+  $recur_msg = "/var/spool/asterisk/recurring/" . $APPTTIME . "." . $NEXTDT . "." . $APPTPHONE . ".ulaw" ;
+ endif;
+ $moveok=rename($fromfile,$recur_script) ;
+ $moveok=rename($frommsg,$recur_msg) ;
+ $handle = fopen($recur_script, "r");
+ $all_data = fread($handle, fileSize($recur_script));
+ fclose($handle);
+ $all_data = str_replace($APPTDT, $NEXTDT, $all_data);
+ $handle = fopen($recur_script, "w");
+ fwrite($handle, $all_data);
+ fclose($handle);
+elseif ($RECURRING=="annually") :
+ $NEXTDT=date("Ymd", mktime (0,0,0,$APPTMO,$APPTDA,$APPTYR+1));
+ $recur_script = "/var/spool/asterisk/recurring/" . $APPTTIME . "." . $NEXTDT . "." . $APPTPHONE . ".call." . $RECURRING ;
+ if (empty($ulaw)) :
+  $recur_msg = "/var/spool/asterisk/recurring/" . $APPTTIME . "." . $NEXTDT . "." . $APPTPHONE . ".wav" ;
+ else :
+  $recur_msg = "/var/spool/asterisk/recurring/" . $APPTTIME . "." . $NEXTDT . "." . $APPTPHONE . ".ulaw" ;
+ endif;
+ $moveok = rename($fromfile,$recur_script) ;
+ $moveok = rename($frommsg,$recur_msg) ;
+ $handle = fopen($recur_script, "r");
+ $all_data = fread($handle, fileSize($recur_script));
+ fclose($handle);
+ $all_data = str_replace($APPTDT, $NEXTDT, $all_data);
+ $handle = fopen($recur_script, "w");
+ fwrite($handle, $all_data);
+ fclose($handle);
+endif ;
+
+//     echo $recur_script."\n" ;
+//     echo $recur_msg."\n" ;
+
+    endif ;
+
+ }
+}
+
+?>
+
