@@ -127,6 +127,27 @@ echo " "
 #/etc/init.d/nginx restart
 #echo " "
 
+echo "Checking for pico TTS to support Web Reminders..."
+#test=`ps aux| grep pico2wave`
+echo "Installing Pico2wave TTS engine..."
+cd /root/
+add-apt-repository 'deb http://ftp.fr.debian.org/debian/ jessie contrib non-free main'
+sh -c "echo deb-src http://ftp.fr.debian.org/debian/ jessie contrib non-free main \ >> /etc/apt/sources.list"
+apt-get update
+# installation dependance
+apt-get install -y automake1.11  fakeroot debhelper automake autoconf libtool help2man libpopt-dev hardening-wrapper
+mkdir pico_build
+cd pico_build
+apt-get source libttspico-utils
+versionsSox=$(ls |head -1)
+cd $versionsSox
+dpkg-buildpackage -rfakeroot -us -uc
+cd ..
+dpkg -i libttspico-data*.deb
+dpkg -i libttspico0*.deb
+dpkg -i libttspico-utils*.deb
+
+
 #echo "Checking for Festival TTS to support Web Reminders..."
 #test=`ps aux | grep "festival --server" | head -n -1`
 #if [ -z "$test" ]; then
