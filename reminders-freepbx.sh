@@ -86,23 +86,25 @@ chmod g+s outgoing
 cp -pr outgoing reminders
 cp -pr outgoing recurring
 
-chown asterisk:www-data /var/lib/share/asterisk/sounds
+chown asterisk:www-data /var/lib/asterisk/sounds
 
 echo "Installing Telephone Reminders voice prompts..."
-cp -pr /root/reminders-sounds/* /var/lib/asterisk/sounds/custom/
+mkdir /var/lib/asterisk/sounds/custom/
+cp -pr /root/freepbx_memo_vocal/reminders-sounds/* /var/lib/asterisk/sounds/custom/
 echo " "
 
 echo "Installing Telephone Reminders AGI scripts..."
-cp -pr /root/reminders-agi/* /var/lib/asterisk/agi-bin/
+cp -pr /root/freepbx_memo_vocal/reminders-agi/* /var/lib/asterisk/agi-bin/
 echo " "
 
 echo "Installing Telephone Reminders dialplan code..."
 echo "#include extensions_extra.d/*" >> /etc/asterisk/extensions_custom.conf
 mkdir /etc/asterisk/extensions_extra.d
-cp -pr /root/reminders-conf-fpx/* /etc/asterisk/extensions_extra.d/
+cp -pr /root/freepbx_memo_vocal/reminders-conf-fpx/* /etc/asterisk/extensions_extra.d/
 echo " "
 
 echo "Installing Telephone Reminders 123 extension..."
+touch /etc/asterisk/extensions_extra.d/freepbx-extrafeatures.conf
 sed -i '\:// BEGIN Reminders:,\:// END Reminders:d' /etc/asterisk/extensions_extra.d/freepbx-extrafeatures.conf
 echo ";# // BEGIN Reminders
 exten => 123,1,Answer
@@ -114,7 +116,7 @@ exten => 123,4,Goto(reminder,s,1)
 
 echo "Installing Telephone Web Reminders application..."
 mkdir /var/www/html/reminders
-cp -pr /root/reminders-web-fpx/* /var/www/html/reminders/
+cp -pr /root/freepbx_memo_vocal/reminders-web-fpx/* /var/www/html/reminders/
 chown asterisk:www-data /var/www/html/reminders
 chmod 775 /var/www/html/reminders/
 echo " "
@@ -147,7 +149,7 @@ echo " "
 
 echo "Reloading Asterisk dialplan to complete install..."
 asterisk -rx "dialplan reload"
-rm -f /root/reminders-xivo.tar.gz
+rm -f /root/freepbx_memo_vocal/reminders-xivo.tar.gz
 echo " "
 echo "Done. Dial 123 to schedule a reminder from any XiVO phone."
 echo "Schedulle web reminders at http://XiVO-ipaddress/reminders"
